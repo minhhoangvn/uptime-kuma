@@ -24,6 +24,9 @@
                                         <option value="keyword">
                                             HTTP(s) - {{ $t("Keyword") }}
                                         </option>
+                                        <option value="grpc-keyword">
+                                            gRPC(s) - {{ $t("Keyword") }}
+                                        </option>
                                         <option value="dns">
                                             DNS
                                         </option>
@@ -61,6 +64,12 @@
                                 <input id="url" v-model="monitor.url" type="url" class="form-control" pattern="https?://.+" required>
                             </div>
 
+                            <!-- gRPC URL -->
+                            <div v-if="monitor.type === 'grpc-keyword' " class="my-3">
+                                <label for="grpc-url" class="form-label">{{ $t("URL") }}</label>
+                                <input id="grpc-url" v-model="monitor.url" type="url" class="form-control" pattern="https?://.+" required>
+                            </div>
+
                             <!-- Push URL -->
                             <div v-if="monitor.type === 'push' " class="my-3">
                                 <label for="push-url" class="form-label">{{ $t("PushUrl") }}</label>
@@ -75,6 +84,15 @@
                             <div v-if="monitor.type === 'keyword' " class="my-3">
                                 <label for="keyword" class="form-label">{{ $t("Keyword") }}</label>
                                 <input id="keyword" v-model="monitor.keyword" type="text" class="form-control" required>
+                                <div class="form-text">
+                                    {{ $t("keywordDescription") }}
+                                </div>
+                            </div>
+
+                            <!-- gRPC Keyword -->
+                            <div v-if="monitor.type === 'grpc-keyword' " class="my-3">
+                                <label for="grpc-keyword" class="form-label">{{ $t("Keyword") }}</label>
+                                <input id="grpc-keyword" v-model="monitor.keyword" type="text" class="form-control" required>
                                 <div class="form-text">
                                     {{ $t("keywordDescription") }}
                                 </div>
@@ -231,7 +249,7 @@
                             </div>
 
                             <!-- HTTP / Keyword only -->
-                            <template v-if="monitor.type === 'http' || monitor.type === 'keyword' ">
+                            <template v-if="monitor.type === 'http' || monitor.type === 'keyword'  || monitor.type === 'grpc-keyword' ">
                                 <div class="my-3">
                                     <label for="maxRedirects" class="form-label">{{ $t("Max. Redirects") }}</label>
                                     <input id="maxRedirects" v-model="monitor.maxredirects" type="number" class="form-control" required min="0" step="1">
@@ -409,6 +427,57 @@
                                     </template>
                                 </template>
                             </template>
+
+                            <!-- gRPC Options -->
+                            <template v-if="monitor.type === 'grpc-keyword' ">
+                                <h2 class="mt-5 mb-2">{{ $t("HTTP Options") }}</h2>
+                                
+                                <!-- Method -->
+                                <div class="my-3">
+                                    <label for="method" class="form-label">{{ $t("Method") }}</label>
+                                    <select id="method" v-model="monitor.method" class="form-select">
+                                        <option value="GET">
+                                            GET
+                                        </option>
+                                        <option value="POST">
+                                            POST
+                                        </option>
+                                        <option value="PUT">
+                                            PUT
+                                        </option>
+                                        <option value="PATCH">
+                                            PATCH
+                                        </option>
+                                        <option value="DELETE">
+                                            DELETE
+                                        </option>
+                                        <option value="HEAD">
+                                            HEAD
+                                        </option>
+                                        <option value="OPTIONS">
+                                            OPTIONS
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <!-- Proto data -->
+                                <div class="my-3">
+                                    <label for="protobuf" class="form-label">{{ $t("Proto Content") }}</label>
+                                    <textarea id="protobuf" v-model="monitor.grpcProtobuf" class="form-control" :placeholder="protoBufDataPlaceholder"></textarea>
+                                </div>
+
+                                <!-- Body -->
+                                <div class="my-3">
+                                    <label for="body" class="form-label">{{ $t("Body") }}</label>
+                                    <textarea id="body" v-model="monitor.grpcBody" class="form-control" :placeholder="bodyPlaceholder"></textarea>
+                                </div>
+
+                                <!-- Metadata -->
+                                <div class="my-3">
+                                    <label for="metadata" class="form-label">{{ $t("Metadata") }}</label>
+                                    <textarea id="metadata" v-model="monitor.grpcMetadata" class="form-control" :placeholder="headersPlaceholder"></textarea>
+                                </div>
+                            </template>
                         </div>
                     </div>
                 </div>
@@ -484,6 +553,38 @@ export default {
             return this.$root.baseURL + "/api/push/" + this.monitor.pushToken + "?status=up&msg=OK&ping=";
         },
 
+        protoBufDataPlaceholder(){
+            return this.$t("Example:", [ `
+syntax = "proto3";
+
+package grpc.health.v1;
+
+option csharp_namespace = "Grpc.Health.V1";
+option go_package = "google.golang.org/grpc/health/grpc_health_v1";
+option java_multiple_files = true;
+option java_outer_classname = "HealthProto";
+option java_package = "io.grpc.health.v1";
+
+message HealthCheckRequest {
+  string service = 1;
+}
+
+message HealthCheckResponse {
+  enum ServingStatus {
+    UNKNOWN = 0;
+    SERVING = 1;
+    NOT_SERVING = 2;
+    SERVICE_UNKNOWN = 3;  // Used only by the Watch method.
+  }
+  ServingStatus status = 1;
+}
+
+service Health {
+  rpc Check(HealthCheckRequest) returns (HealthCheckResponse);
+  rpc Watch(HealthCheckRequest) returns (stream HealthCheckResponse);
+}
+            ` ]);
+        },
         bodyPlaceholder() {
             return this.$t("Example:", [ `
 {

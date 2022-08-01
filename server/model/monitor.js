@@ -212,7 +212,7 @@ class Monitor extends BeanModel {
             }
 
             try {
-                if (this.type === "http" || this.type === "keyword") {
+                if (this.type === "http" || this.type === "keyword" || this.type === "grpc-keyword") {
                     // Do not do any queries/high loading things before the "bean.ping"
                     let startTime = dayjs().valueOf();
 

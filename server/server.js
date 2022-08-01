@@ -600,8 +600,10 @@ let needSetup = false;
                 monitor.accepted_statuscodes_json = JSON.stringify(monitor.accepted_statuscodes);
                 delete monitor.accepted_statuscodes;
 
+                log.info('Receive data: ',monitor);
                 bean.import(monitor);
                 bean.user_id = socket.userID;
+                log.info('Store bean data: ',bean);
                 await R.store(bean);
 
                 await updateMonitorNotification(bean.id, notificationIDList);
