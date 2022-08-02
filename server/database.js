@@ -81,13 +81,13 @@ class Database {
         // Data Directory (must be end with "/")
         Database.dataDir = process.env.DATA_DIR || args["data-dir"] || "./data/";
         Database.path = Database.dataDir + "kuma.db";
-        if (!fs.existsSync(Database.dataDir)) {
+        if (! fs.existsSync(Database.dataDir)) {
             fs.mkdirSync(Database.dataDir, { recursive: true });
         }
 
         Database.uploadDir = Database.dataDir + "upload/";
 
-        if (!fs.existsSync(Database.uploadDir)) {
+        if (! fs.existsSync(Database.uploadDir)) {
             fs.mkdirSync(Database.uploadDir, { recursive: true });
         }
 
@@ -154,7 +154,7 @@ class Database {
         // Read more: https://sqlite.org/pragma.html#pragma_synchronous
         await R.exec("PRAGMA synchronous = FULL");
 
-        if (!noLog) {
+        if (! noLog) {
             log.info("db", "SQLite config:");
             log.info("db", await R.getAll("PRAGMA journal_mode"));
             log.info("db", await R.getAll("PRAGMA cache_size"));
@@ -166,7 +166,7 @@ class Database {
     static async patch() {
         let version = parseInt(await setting("database_version"));
 
-        if (!version) {
+        if (! version) {
             version = 0;
         }
 
@@ -223,7 +223,7 @@ class Database {
         log.info("db", "Database Patch 2.0 Process");
         let databasePatchedFiles = await setting("databasePatchedFiles");
 
-        if (!databasePatchedFiles) {
+        if (! databasePatchedFiles) {
             databasePatchedFiles = {};
         }
 
@@ -286,15 +286,15 @@ class Database {
             statusPage.show_tags = !!await setting("statusPageTags");
             statusPage.password = null;
 
-            if (!statusPage.title) {
+            if (! statusPage.title) {
                 statusPage.title = "My Status Page";
             }
 
-            if (!statusPage.icon) {
+            if (! statusPage.icon) {
                 statusPage.icon = "";
             }
 
-            if (!statusPage.theme) {
+            if (! statusPage.theme) {
                 statusPage.theme = "light";
             }
 
@@ -333,13 +333,13 @@ class Database {
     static async patch2Recursion(sqlFilename, databasePatchedFiles) {
         let value = this.patchList[sqlFilename];
 
-        if (!value) {
+        if (! value) {
             log.info("db", sqlFilename + " skip");
             return;
         }
 
         // Check if patched
-        if (!databasePatchedFiles[sqlFilename]) {
+        if (! databasePatchedFiles[sqlFilename]) {
             log.info("db", sqlFilename + " is not patched");
 
             if (value.parents) {
@@ -376,7 +376,7 @@ class Database {
         // Remove all comments (--)
         let lines = text.split("\n");
         lines = lines.filter((line) => {
-            return !line.startsWith("--");
+            return ! line.startsWith("--");
         });
 
         // Split statements by semicolon
@@ -438,7 +438,7 @@ class Database {
      * @param {string} version Version code of backup
      */
     static backup(version) {
-        if (!this.backupPath) {
+        if (! this.backupPath) {
             log.info("db", "Backing up the database");
             this.backupPath = this.dataDir + "kuma.db.bak" + version;
             fs.copyFileSync(Database.path, this.backupPath);
@@ -456,18 +456,18 @@ class Database {
             }
 
             // Double confirm if all files actually backup
-            if (!fs.existsSync(this.backupPath)) {
+            if (! fs.existsSync(this.backupPath)) {
                 throw new Error("Backup failed! " + this.backupPath);
             }
 
             if (fs.existsSync(shmPath)) {
-                if (!fs.existsSync(this.backupShmPath)) {
+                if (! fs.existsSync(this.backupShmPath)) {
                     throw new Error("Backup failed! " + this.backupShmPath);
                 }
             }
 
             if (fs.existsSync(walPath)) {
-                if (!fs.existsSync(this.backupWalPath)) {
+                if (! fs.existsSync(this.backupWalPath)) {
                     throw new Error("Backup failed! " + this.backupWalPath);
                 }
             }
