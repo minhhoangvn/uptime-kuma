@@ -154,7 +154,7 @@ class Database {
         // Read more: https://sqlite.org/pragma.html#pragma_synchronous
         await R.exec("PRAGMA synchronous = FULL");
 
-        if (! noLog) {
+        if (!noLog) {
             log.info("db", "SQLite config:");
             log.info("db", await R.getAll("PRAGMA journal_mode"));
             log.info("db", await R.getAll("PRAGMA cache_size"));
@@ -286,15 +286,15 @@ class Database {
             statusPage.show_tags = !!await setting("statusPageTags");
             statusPage.password = null;
 
-            if (! statusPage.title) {
+            if (!statusPage.title) {
                 statusPage.title = "My Status Page";
             }
 
-            if (! statusPage.icon) {
+            if (!statusPage.icon) {
                 statusPage.icon = "";
             }
 
-            if (! statusPage.theme) {
+            if (!statusPage.theme) {
                 statusPage.theme = "light";
             }
 
@@ -456,18 +456,18 @@ class Database {
             }
 
             // Double confirm if all files actually backup
-            if (! fs.existsSync(this.backupPath)) {
+            if (!fs.existsSync(this.backupPath)) {
                 throw new Error("Backup failed! " + this.backupPath);
             }
 
             if (fs.existsSync(shmPath)) {
-                if (! fs.existsSync(this.backupShmPath)) {
+                if (!fs.existsSync(this.backupShmPath)) {
                     throw new Error("Backup failed! " + this.backupShmPath);
                 }
             }
 
             if (fs.existsSync(walPath)) {
-                if (! fs.existsSync(this.backupWalPath)) {
+                if (!fs.existsSync(this.backupWalPath)) {
                     throw new Error("Backup failed! " + this.backupWalPath);
                 }
             }
