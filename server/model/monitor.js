@@ -191,7 +191,7 @@ class Monitor extends BeanModel {
 
             let beatInterval = this.interval;
 
-            if (!beatInterval) {
+            if (! beatInterval) {
                 beatInterval = 1;
             }
 
@@ -493,7 +493,7 @@ class Monitor extends BeanModel {
                         },
                         httpsAgent: new https.Agent({
                             maxCachedSessions: 0,      // Use Custom agent to disable session reuse (https://github.com/nodejs/node/issues/3940)
-                            rejectUnauthorized: !this.getIgnoreTls(),
+                            rejectUnauthorized: ! this.getIgnoreTls(),
                         }),
                     };
 
