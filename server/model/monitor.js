@@ -5,8 +5,8 @@ let timezone = require("dayjs/plugin/timezone");
 dayjs.extend(utc);
 dayjs.extend(timezone);
 const axios = require("axios");
-const grpc = require('@grpc/grpc-js')
-const protojs = require('protobufjs');
+const grpc = require("@grpc/grpc-js");
+const protojs = require("protobufjs");
 const { Prometheus } = require("../prometheus");
 const { log, UP, DOWN, PENDING, flipStatus, TimeLogger } = require("../../src/util");
 const { tcping, ping, dnsResolve, checkCertificate, checkStatusCode, getTotalClientInRoom, setting, mssqlQuery, postgresQuery, mqttAsync, setSetting, httpNtlm } = require("../util-server");
@@ -133,7 +133,7 @@ class Monitor extends BeanModel {
      * @returns {Promise<LooseObject<any>[]>}
      */
     async getTags() {
-        return await R.getAll("SELECT mt.*, tag.name, tag.color FROM monitor_tag mt JOIN tag ON mt.tag_id = tag.id WHERE mt.monitor_id = ?", [this.id]);
+        return await R.getAll("SELECT mt.*, tag.name, tag.color FROM monitor_tag mt JOIN tag ON mt.tag_id = tag.id WHERE mt.monitor_id = ?", [ this.id ]);
     }
 
     /**
@@ -525,8 +525,7 @@ class Monitor extends BeanModel {
                     bean.msg = "";
                     bean.status = UP;
                     bean.ping = dayjs().valueOf() - startTime;
-                }
-                else if (this.type === "grpc-keyword") {
+                } else if (this.type === "grpc-keyword") {
                     const response = await this.invokeGRPCRequest(bean, this);
                     log.debug("monitor", `gRPC response ${JSON.stringify(response)}`);
                 } else if (this.type === "postgres") {
@@ -603,7 +602,7 @@ class Monitor extends BeanModel {
             Monitor.sendStats(io, this.id, this.user_id);
 
             log.debug("monitor", `[${this.name}] Store`);
-            log.debug("monitor", `Bean data store ${bean.toJSON()}`)
+            log.debug("monitor", `Bean data store ${bean.toJSON()}`);
             await R.store(bean);
 
             log.debug("monitor", `[${this.name}] prometheus.update`);
@@ -734,9 +733,8 @@ class Monitor extends BeanModel {
                     bean.status = DOWN;
                     bean.msg = `Error in send gRPC ${err.code} ${err.details}`;
                     return resolve(err);
-                }
-                else {
-                    log.debug('monitor:', `gRPC response: ${JSON.stringify(response)}`);
+                } else {
+                    log.debug("monitor:", `gRPC response: ${JSON.stringify(response)}`);
                     bean.msg = `${JSON.stringify(response)}`;
                     response = JSON.stringify(response);
                     if (response.toString().includes(monitor.keyword)) {
@@ -747,7 +745,7 @@ class Monitor extends BeanModel {
                             response = response.substring(0, 47) + "...";
                         }
                         bean.status = DOWN;
-                        log.debug('monitor:', `GRPC response [${bean.msg}] + ", but keyword [${monitor.keyword}] is not in [" + ${bean.msg} + "]"`);
+                        log.debug("monitor:", `GRPC response [${bean.msg}] + ", but keyword [${monitor.keyword}] is not in [" + ${bean.msg} + "]"`);
                         bean.msg += `, but keyword [${monitor.keyword}] is not in [" + ${response} + "]`;
                     }
                     return resolve(response);
@@ -755,6 +753,7 @@ class Monitor extends BeanModel {
             });
         });
     }
+
     /**
      * Send statistics to clients
      * @param {Server} io Socket server instance
@@ -870,7 +869,7 @@ class Monitor extends BeanModel {
 
         } else {
             // Handle new monitor with only one beat, because the beat's duration = 0
-            let status = parseInt(await R.getCell("SELECT `status` FROM heartbeat WHERE monitor_id = ?", [monitorID]));
+            let status = parseInt(await R.getCell("SELECT `status` FROM heartbeat WHERE monitor_id = ?", [ monitorID ]));
 
             if (status === UP) {
                 uptime = 1;
@@ -970,8 +969,8 @@ class Monitor extends BeanModel {
             let notifyDays = await setting("tlsExpiryNotifyDays");
             if (notifyDays == null || !Array.isArray(notifyDays)) {
                 // Reset Default
-                setSetting("tlsExpiryNotifyDays", [7, 14, 21], "general");
-                notifyDays = [7, 14, 21];
+                setSetting("tlsExpiryNotifyDays", [ 7, 14, 21 ], "general");
+                notifyDays = [ 7, 14, 21 ];
             }
 
             if (notifyDays != null && Array.isArray(notifyDays)) {
@@ -1053,12 +1052,12 @@ class Monitor extends BeanModel {
     }
 
     createGrpcClient() {
-        const Client = grpc.makeGenericClientConstructor({})
+        const Client = grpc.makeGenericClientConstructor({});
         const credentials = this.grpcEnableTls ? grpc.credentials.createSsl() : grpc.credentials.createInsecure();
         return new Client(
             this.grpcUrl,
             credentials
-        )
+        );
     }
 
     createGrpcServiceClientStub(client) {

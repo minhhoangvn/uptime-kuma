@@ -95,7 +95,6 @@
                                 </div>
                             </div>
 
-
                             <!-- Hostname -->
                             <!-- TCP Port / Ping / DNS / Steam / MQTT only -->
                             <div v-if="monitor.type === 'port' || monitor.type === 'ping' || monitor.type === 'dns' || monitor.type === 'steam' || monitor.type === 'mqtt'" class="my-3">
@@ -281,7 +280,7 @@
                             </div>
 
                             <!-- HTTP / Keyword only -->
-                            <template v-if="monitor.type === 'http' || monitor.type === 'keyword'  || monitor.type === 'grpc-keyword' ">
+                            <template v-if="monitor.type === 'http' || monitor.type === 'keyword' || monitor.type === 'grpc-keyword' ">
                                 <div class="my-3">
                                     <label for="maxRedirects" class="form-label">{{ $t("Max. Redirects") }}</label>
                                     <input id="maxRedirects" v-model="monitor.maxredirects" type="number" class="form-control" required min="0" step="1">
@@ -462,28 +461,28 @@
 
                             <!-- gRPC Options -->
                             <template v-if="monitor.type === 'grpc-keyword' ">
-                             <!-- Proto service enable TLS -->
+                                <!-- Proto service enable TLS -->
                                 <h2 class="mt-5 mb-2">{{ $t("HTTP Options") }}</h2>
-                                  <div class="my-3 form-check">
-                                <input id="grpc-tls" v-model="monitor.grpcEnableTls" class="form-check-input" type="checkbox">
-                                <label class="form-check-label" for="upside-down">
-                                    {{ $t("Enable TLS") }}
-                                </label>
-                                <div class="form-text">
-                                    {{ $t("enableGRPCTls") }}
+                                <div class="my-3 form-check">
+                                    <input id="grpc-tls" v-model="monitor.grpcEnableTls" class="form-check-input" type="checkbox">
+                                    <label class="form-check-label" for="upside-down">
+                                        {{ $t("Enable TLS") }}
+                                    </label>
+                                    <div class="form-text">
+                                        {{ $t("enableGRPCTls") }}
+                                    </div>
                                 </div>
-                            </div>
-                             <!-- Proto service name data -->
+                                <!-- Proto service name data -->
                                 <div class="my-3">
                                     <label for="protobuf" class="form-label">{{ $t("Proto Service Name") }}</label>
-                                     <input id="name" v-model="monitor.grpcServiceName" type="text" class="form-control" :placeholder="protoServicePlaceholder" required>
+                                    <input id="name" v-model="monitor.grpcServiceName" type="text" class="form-control" :placeholder="protoServicePlaceholder" required>
                                 </div>
 
-                                 <!-- Proto method data -->
+                                <!-- Proto method data -->
                                 <div class="my-3">
                                     <label for="protobuf" class="form-label">{{ $t("Proto Method") }}</label>
-                                     <input id="name" v-model="monitor.grpcMethod" type="text" class="form-control" :placeholder="protoMethodPlaceholder" required>
-                                      <div class="form-text">
+                                    <input id="name" v-model="monitor.grpcMethod" type="text" class="form-control" :placeholder="protoMethodPlaceholder" required>
+                                    <div class="form-text">
                                         {{ $t("grpcMethodDescription") }}
                                     </div>
                                 </div>
@@ -501,12 +500,12 @@
                                 </div>
 
                                 <!-- Metadata: temporary disable waiting for next PR allow to send gRPC with metadata -->
-                                 <template v-if="false">
-                                <div class="my-3">
-                                    <label for="metadata" class="form-label">{{ $t("Metadata") }}</label>
-                                    <textarea id="metadata" v-model="monitor.grpcMetadata" class="form-control" :placeholder="headersPlaceholder"></textarea>
-                                </div>
-                                 </template>
+                                <template v-if="false">
+                                    <div class="my-3">
+                                        <label for="metadata" class="form-label">{{ $t("Metadata") }}</label>
+                                        <textarea id="metadata" v-model="monitor.grpcMetadata" class="form-control" :placeholder="headersPlaceholder"></textarea>
+                                    </div>
+                                </template>
                             </template>
                         </div>
                     </div>
@@ -585,16 +584,16 @@ export default {
         pushURL() {
             return this.$root.baseURL + "/api/push/" + this.monitor.pushToken + "?status=up&msg=OK&ping=";
         },
-        
-        protoServicePlaceholder(){
-                        return this.$t("Example:", [ `Health` ]);
+
+        protoServicePlaceholder() {
+            return this.$t("Example:", [ "Health" ]);
         },
 
-        protoMethodPlaceholder(){
-                        return this.$t("Example:", [ `check` ]);
+        protoMethodPlaceholder() {
+            return this.$t("Example:", [ "check" ]);
         },
 
-        protoBufDataPlaceholder(){
+        protoBufDataPlaceholder() {
             return this.$t("Example:", [ `
 syntax = "proto3";
 

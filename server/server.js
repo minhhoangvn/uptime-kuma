@@ -94,7 +94,7 @@ if (hostname) {
     log.info("server", "Custom hostname: " + hostname);
 }
 
-const port = [args.port, process.env.UPTIME_KUMA_PORT, process.env.PORT, 3001]
+const port = [ args.port, process.env.UPTIME_KUMA_PORT, process.env.PORT, 3001 ]
     .map(portValue => parseInt(portValue))
     .find(portValue => !isNaN(portValue));
 
@@ -617,10 +617,10 @@ let needSetup = false;
                 monitor.accepted_statuscodes_json = JSON.stringify(monitor.accepted_statuscodes);
                 delete monitor.accepted_statuscodes;
 
-                log.debug('monitor', `Receive data ${JSON.stringify(monitor)}`);
+                log.debug("monitor", `Receive data ${JSON.stringify(monitor)}`);
                 bean.import(monitor);
                 bean.user_id = socket.userID;
-                log.debug('monitor', `Convert to bean ${JSON.stringify(bean.export(false))}`);
+                log.debug("monitor", `Convert to bean ${JSON.stringify(bean.export(false))}`);
                 await R.store(bean);
 
                 await updateMonitorNotification(bean.id, notificationIDList);
@@ -651,8 +651,8 @@ let needSetup = false;
         socket.on("editMonitor", async (monitor, callback) => {
             try {
                 checkLogin(socket);
-                log.debug('monitor', `Receive edit data ${JSON.stringify(monitor)}`);
-                let bean = await R.findOne("monitor", " id = ? ", [monitor.id]);
+                log.debug("monitor", `Receive edit data ${JSON.stringify(monitor)}`);
+                let bean = await R.findOne("monitor", " id = ? ", [ monitor.id ]);
 
                 if (bean.user_id !== socket.userID) {
                     throw new Error("Permission denied.");
@@ -916,7 +916,7 @@ let needSetup = false;
             try {
                 checkLogin(socket);
 
-                let bean = await R.findOne("monitor", " id = ? ", [tag.id]);
+                let bean = await R.findOne("monitor", " id = ? ", [ tag.id ]);
                 bean.name = tag.name;
                 bean.color = tag.color;
                 await R.store(bean);
@@ -938,7 +938,7 @@ let needSetup = false;
             try {
                 checkLogin(socket);
 
-                await R.exec("DELETE FROM tag WHERE id = ? ", [tagID]);
+                await R.exec("DELETE FROM tag WHERE id = ? ", [ tagID ]);
 
                 callback({
                     ok: true,
@@ -1231,7 +1231,7 @@ let needSetup = false;
                         const exists = proxies.find(item => item.id === proxy.id);
 
                         // Do not process when proxy already exists in import handle is skip and keep
-                        if (["skip", "keep"].includes(importHandle) && !exists) {
+                        if ([ "skip", "keep" ].includes(importHandle) && !exists) {
                             return;
                         }
 
