@@ -597,12 +597,10 @@ class Monitor extends BeanModel {
             }
 
             log.debug("monitor", `[${this.name}] Send to socket`);
-            log.debug("monitor", `Store metrics [${bean.toJSON()}]`);
             io.to(this.user_id).emit("heartbeat", bean.toJSON());
             Monitor.sendStats(io, this.id, this.user_id);
 
             log.debug("monitor", `[${this.name}] Store`);
-            log.debug("monitor", `Bean data store ${bean.toJSON()}`);
             await R.store(bean);
 
             log.debug("monitor", `[${this.name}] prometheus.update`);
@@ -610,7 +608,7 @@ class Monitor extends BeanModel {
 
             previousBeat = bean;
 
-            if (!this.isStop) {
+            if (! this.isStop) {
                 log.debug("monitor", `[${this.name}] SetTimeout for next check.`);
                 this.heartbeatInterval = setTimeout(safeBeat, beatInterval * 1000);
             } else {
@@ -628,7 +626,7 @@ class Monitor extends BeanModel {
                 UptimeKumaServer.errorLog(e, false);
                 log.error("monitor", "Please report to https://github.com/louislam/uptime-kuma/issues");
 
-                if (!this.isStop) {
+                if (! this.isStop) {
                     log.info("monitor", "Try to restart the monitor");
                     this.heartbeatInterval = setTimeout(safeBeat, this.interval * 1000);
                 }
