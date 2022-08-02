@@ -600,10 +600,10 @@ let needSetup = false;
                 monitor.accepted_statuscodes_json = JSON.stringify(monitor.accepted_statuscodes);
                 delete monitor.accepted_statuscodes;
 
-                log.info('Receive data: ',monitor);
+                log.info('monitor',`Receive data ${JSON.stringify(monitor)}`);
                 bean.import(monitor);
                 bean.user_id = socket.userID;
-                log.info('Store bean data: ',bean);
+                log.info('monitor', `Convert to bean ${JSON.stringify(bean.export(false))}`);
                 await R.store(bean);
 
                 await updateMonitorNotification(bean.id, notificationIDList);
@@ -634,7 +634,7 @@ let needSetup = false;
         socket.on("editMonitor", async (monitor, callback) => {
             try {
                 checkLogin(socket);
-
+                log.info('monitor',`Receive edit data ${JSON.stringify(monitor)}`);
                 let bean = await R.findOne("monitor", " id = ? ", [ monitor.id ]);
 
                 if (bean.user_id !== socket.userID) {
@@ -676,6 +676,11 @@ let needSetup = false;
                 bean.authMethod = monitor.authMethod;
                 bean.authWorkstation = monitor.authWorkstation;
                 bean.authDomain = monitor.authDomain;
+                bean.grpUrl = monitor.grpUrl;
+                bean.grpcProtobuf = monitor.grpcProtobuf;
+                bean.grpcMethod = monitor.grpcMethod;
+                bean.grpcBody= monitor.grpcBody;
+                bean.grpcMetadata= monitor.grpcMetadata;
 
                 await R.store(bean);
 

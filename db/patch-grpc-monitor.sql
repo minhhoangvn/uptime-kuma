@@ -2,6 +2,9 @@
 BEGIN TRANSACTION;
 
 ALTER TABLE monitor
+    ADD grpc_url VARCHAR(255) default null;
+
+ALTER TABLE monitor
     ADD grpc_protobuf TEXT default null;
 
 ALTER TABLE monitor
@@ -10,4 +13,6 @@ ALTER TABLE monitor
 ALTER TABLE monitor
     ADD grpc_metadata TEXT default null;
 
+ALTER TABLE monitor
+    ADD grpc_method TEXT default null;
 COMMIT;

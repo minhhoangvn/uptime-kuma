@@ -67,7 +67,7 @@
                             <!-- gRPC URL -->
                             <div v-if="monitor.type === 'grpc-keyword' " class="my-3">
                                 <label for="grpc-url" class="form-label">{{ $t("URL") }}</label>
-                                <input id="grpc-url" v-model="monitor.url" type="url" class="form-control" pattern="https?://.+" required>
+                                <input id="grpc-url" v-model="monitor.grpcUrl" type="url" class="form-control" pattern="[^\:]+:[0-9]{5}" required>
                             </div>
 
                             <!-- Push URL -->
@@ -81,7 +81,7 @@
                             </div>
 
                             <!-- Keyword -->
-                            <div v-if="monitor.type === 'keyword' " class="my-3">
+                            <div v-if="monitor.type === 'keyword' || monitor.type === 'grpc-keyword' " class="my-3">
                                 <label for="keyword" class="form-label">{{ $t("Keyword") }}</label>
                                 <input id="keyword" v-model="monitor.keyword" type="text" class="form-control" required>
                                 <div class="form-text">
@@ -89,14 +89,6 @@
                                 </div>
                             </div>
 
-                            <!-- gRPC Keyword -->
-                            <div v-if="monitor.type === 'grpc-keyword' " class="my-3">
-                                <label for="grpc-keyword" class="form-label">{{ $t("Keyword") }}</label>
-                                <input id="grpc-keyword" v-model="monitor.keyword" type="text" class="form-control" required>
-                                <div class="form-text">
-                                    {{ $t("keywordDescription") }}
-                                </div>
-                            </div>
 
                             <!-- Hostname -->
                             <!-- TCP Port / Ping / DNS / Steam / MQTT only -->
@@ -431,33 +423,12 @@
                             <!-- gRPC Options -->
                             <template v-if="monitor.type === 'grpc-keyword' ">
                                 <h2 class="mt-5 mb-2">{{ $t("HTTP Options") }}</h2>
-                                
-                                <!-- Method -->
+                            
+
+                                 <!-- Proto method data -->
                                 <div class="my-3">
-                                    <label for="method" class="form-label">{{ $t("Method") }}</label>
-                                    <select id="method" v-model="monitor.method" class="form-select">
-                                        <option value="GET">
-                                            GET
-                                        </option>
-                                        <option value="POST">
-                                            POST
-                                        </option>
-                                        <option value="PUT">
-                                            PUT
-                                        </option>
-                                        <option value="PATCH">
-                                            PATCH
-                                        </option>
-                                        <option value="DELETE">
-                                            DELETE
-                                        </option>
-                                        <option value="HEAD">
-                                            HEAD
-                                        </option>
-                                        <option value="OPTIONS">
-                                            OPTIONS
-                                        </option>
-                                    </select>
+                                    <label for="protobuf" class="form-label">{{ $t("Proto Method") }}</label>
+                                     <input id="name" v-model="monitor.grpcMethod" type="text" class="form-control" :placeholder="protoMethodPlaceholder" required>
                                 </div>
 
                                 <!-- Proto data -->
@@ -551,6 +522,9 @@ export default {
 
         pushURL() {
             return this.$root.baseURL + "/api/push/" + this.monitor.pushToken + "?status=up&msg=OK&ping=";
+        },
+        protoMethodPlaceholder(){
+                        return this.$t("Example:", [ `/grpc.health.v1.Health/Check` ]);
         },
 
         protoBufDataPlaceholder(){
