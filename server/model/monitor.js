@@ -5,6 +5,8 @@ let timezone = require("dayjs/plugin/timezone");
 dayjs.extend(utc);
 dayjs.extend(timezone);
 const axios = require("axios");
+const grpc = require('@grpc/grpc-js')
+const protojs = require('protobufjs');
 const { Prometheus } = require("../prometheus");
 const { log, UP, DOWN, PENDING, flipStatus, TimeLogger } = require("../../src/util");
 const { tcping, ping, dnsResolve, checkCertificate, checkStatusCode, getTotalClientInRoom, setting, mssqlQuery, mqttAsync, setSetting, httpNtlm } = require("../util-server");
@@ -95,7 +97,9 @@ class Monitor extends BeanModel {
             authDomain: this.authDomain,
             grpcUrl: this.grpcUrl,
             grpcProtobuf: this.grpcProtobuf,
-            grpcMethod: this.grpcMethod
+            grpcMethod: this.grpcMethod,
+            grpcServiceName: this.grpcServiceName,
+            grpcEnableTls: this.grpcEnableTls,
         };
 
         if (includeSensitiveData) {
@@ -481,7 +485,8 @@ class Monitor extends BeanModel {
                     bean.ping = dayjs().valueOf() - startTime;
                 }
                 else if (this.type === "grpc-keyword") {
-
+                    const response = await this.invokeGRPCRequest(bean, this);
+                    log.debug("monitor", `gRPC response ${JSON.stringify(response)}`);
                 }
                 else {
                     bean.msg = "Unknown Monitor Type";
@@ -544,10 +549,12 @@ class Monitor extends BeanModel {
             }
 
             log.debug("monitor", `[${this.name}] Send to socket`);
+            log.debug("monitor", `Store metrics [${bean.toJSON()}]`);
             io.to(this.user_id).emit("heartbeat", bean.toJSON());
             Monitor.sendStats(io, this.id, this.user_id);
 
             log.debug("monitor", `[${this.name}] Store`);
+            log.debug("monitor", `Bean data store ${bean.toJSON()}`)
             await R.store(bean);
 
             log.debug("monitor", `[${this.name}] prometheus.update`);
@@ -665,6 +672,40 @@ class Monitor extends BeanModel {
         return checkCertificateResult;
     }
 
+    /** Send gRPC request */
+    async invokeGRPCRequest(bean, monitor) {
+        return new Promise((resolve, _) => {
+            let startTime = dayjs().valueOf();
+            const client = monitor.createGrpcClient();
+            const grpcService = monitor.createGrpcServiceClientStub(client);
+            return grpcService[`${monitor.grpcMethod}`](JSON.parse(monitor.grpcBody), function (err, response) {
+                bean.ping = dayjs().valueOf() - startTime;
+                if (err) {
+                    log.debug("monitor", `Error in send gRPC ${err.code} ${err.details}`);
+                    bean.status = DOWN;
+                    bean.msg = `Error in send gRPC ${err.code} ${err.details}`;
+                    return resolve(err);
+                }
+                else {
+                    log.debug('monitor:', `gRPC response: ${JSON.stringify(response)}`);
+                    bean.msg = `${JSON.stringify(response)}`;
+                    response = JSON.stringify(response);
+                    if (response.toString().includes(monitor.keyword)) {
+                        bean.msg += ", keyword is found";
+                        bean.status = UP;
+                    } else {
+                        if (response.length > 50) {
+                            response = response.substring(0, 47) + "...";
+                        }
+                        bean.status = DOWN;
+                        log.debug('monitor:', `GRPC response [${bean.msg}] + ", but keyword [${monitor.keyword}] is not in [" + ${bean.msg} + "]"`);
+                        bean.msg += `, but keyword [${monitor.keyword}] is not in [" + ${response} + "]`;
+                    }
+                    return resolve(response);
+                }
+            });
+        });
+    }
     /**
      * Send statistics to clients
      * @param {Server} io Socket server instance
@@ -960,6 +1001,33 @@ class Monitor extends BeanModel {
         `, [
             monitorID
         ]);
+    }
+
+    createGrpcClient() {
+        const Client = grpc.makeGenericClientConstructor({})
+        const credentials = this.grpcEnableTls ? grpc.credentials.createSsl() : grpc.credentials.createInsecure();
+        return new Client(
+            this.grpcUrl,
+            credentials
+        )
+    }
+
+    createGrpcServiceClientStub(client) {
+        const protocObject = protojs.parse(this.grpcProtobuf);
+        const protoServiceObject = protocObject.root.lookupService(this.grpcServiceName);
+        return protoServiceObject.create(function (method, requestData, cb) {
+            const fullServiceName = method.fullName;
+            const serviceFQDN = fullServiceName.split(".");
+            const serviceMethod = serviceFQDN.pop();
+            const serviceMethodClientImpl = `/${serviceFQDN.slice(1).join(".")}/${serviceMethod}`;
+            log.debug("monitor", `gRPC method ${serviceMethodClientImpl}`);
+            client.makeUnaryRequest(
+                serviceMethodClientImpl,
+                arg => arg,
+                arg => arg,
+                requestData,
+                cb);
+        }, false, false);
     }
 }
 

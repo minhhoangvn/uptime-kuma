@@ -422,13 +422,30 @@
 
                             <!-- gRPC Options -->
                             <template v-if="monitor.type === 'grpc-keyword' ">
+                             <!-- Proto service enable TLS -->
                                 <h2 class="mt-5 mb-2">{{ $t("HTTP Options") }}</h2>
-                            
+                                  <div class="my-3 form-check">
+                                <input id="grpc-tls" v-model="monitor.grpcEnableTls" class="form-check-input" type="checkbox">
+                                <label class="form-check-label" for="upside-down">
+                                    {{ $t("Enable TLS") }}
+                                </label>
+                                <div class="form-text">
+                                    {{ $t("enableGRPCTls") }}
+                                </div>
+                            </div>
+                             <!-- Proto service name data -->
+                                <div class="my-3">
+                                    <label for="protobuf" class="form-label">{{ $t("Proto Service Name") }}</label>
+                                     <input id="name" v-model="monitor.grpcServiceName" type="text" class="form-control" :placeholder="protoServicePlaceholder" required>
+                                </div>
 
                                  <!-- Proto method data -->
                                 <div class="my-3">
                                     <label for="protobuf" class="form-label">{{ $t("Proto Method") }}</label>
                                      <input id="name" v-model="monitor.grpcMethod" type="text" class="form-control" :placeholder="protoMethodPlaceholder" required>
+                                      <div class="form-text">
+                                        {{ $t("grpcMethodDescription") }}
+                                    </div>
                                 </div>
 
                                 <!-- Proto data -->
@@ -523,8 +540,13 @@ export default {
         pushURL() {
             return this.$root.baseURL + "/api/push/" + this.monitor.pushToken + "?status=up&msg=OK&ping=";
         },
+        
+        protoServicePlaceholder(){
+                        return this.$t("Example:", [ `Health` ]);
+        },
+
         protoMethodPlaceholder(){
-                        return this.$t("Example:", [ `/grpc.health.v1.Health/Check` ]);
+                        return this.$t("Example:", [ `check` ]);
         },
 
         protoBufDataPlaceholder(){
@@ -533,11 +555,10 @@ syntax = "proto3";
 
 package grpc.health.v1;
 
-option csharp_namespace = "Grpc.Health.V1";
-option go_package = "google.golang.org/grpc/health/grpc_health_v1";
-option java_multiple_files = true;
-option java_outer_classname = "HealthProto";
-option java_package = "io.grpc.health.v1";
+service Health {
+  rpc Check(HealthCheckRequest) returns (HealthCheckResponse);
+  rpc Watch(HealthCheckRequest) returns (stream HealthCheckResponse);
+}
 
 message HealthCheckRequest {
   string service = 1;
@@ -551,11 +572,6 @@ message HealthCheckResponse {
     SERVICE_UNKNOWN = 3;  // Used only by the Watch method.
   }
   ServingStatus status = 1;
-}
-
-service Health {
-  rpc Check(HealthCheckRequest) returns (HealthCheckResponse);
-  rpc Watch(HealthCheckRequest) returns (stream HealthCheckResponse);
 }
             ` ]);
         },
