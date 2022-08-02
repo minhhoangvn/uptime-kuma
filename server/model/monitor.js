@@ -9,7 +9,7 @@ const grpc = require('@grpc/grpc-js')
 const protojs = require('protobufjs');
 const { Prometheus } = require("../prometheus");
 const { log, UP, DOWN, PENDING, flipStatus, TimeLogger } = require("../../src/util");
-const { tcping, ping, dnsResolve, checkCertificate, checkStatusCode, getTotalClientInRoom, setting, mssqlQuery, mqttAsync, setSetting, httpNtlm } = require("../util-server");
+const { tcping, ping, dnsResolve, checkCertificate, checkStatusCode, getTotalClientInRoom, setting, mssqlQuery, postgresQuery, mqttAsync, setSetting, httpNtlm } = require("../util-server");
 const { R } = require("redbean-node");
 const { BeanModel } = require("redbean-node/dist/bean-model");
 const { Notification } = require("../notification");
@@ -18,6 +18,7 @@ const { demoMode } = require("../config");
 const version = require("../../package.json").version;
 const apicache = require("../modules/apicache");
 const { UptimeKumaServer } = require("../uptime-kuma-server");
+const { CacheableDnsHttpAgent } = require("../cacheable-dns-http-agent");
 
 /**
  * status:
@@ -36,7 +37,13 @@ class Monitor extends BeanModel {
         let obj = {
             id: this.id,
             name: this.name,
+            sendUrl: this.sendUrl,
         };
+
+        if (this.sendUrl) {
+            obj.url = this.url;
+        }
+
         if (showTags) {
             obj.tags = await this.getTags();
         }
@@ -83,6 +90,9 @@ class Monitor extends BeanModel {
             dns_resolve_type: this.dns_resolve_type,
             dns_resolve_server: this.dns_resolve_server,
             dns_last_result: this.dns_last_result,
+            pushToken: this.pushToken,
+            docker_container: this.docker_container,
+            docker_host: this.docker_host,
             proxyId: this.proxy_id,
             notificationIDList,
             tags: tags,
@@ -443,9 +453,12 @@ class Monitor extends BeanModel {
                             "Accept": "*/*",
                             "User-Agent": "Uptime-Kuma/" + version,
                         },
-                        httpsAgent: new https.Agent({
+                        httpsAgent: CacheableDnsHttpAgent.getHttpsAgent({
                             maxCachedSessions: 0,      // Use Custom agent to disable session reuse (https://github.com/nodejs/node/issues/3940)
                             rejectUnauthorized: !this.getIgnoreTls(),
+                        }),
+                        httpAgent: CacheableDnsHttpAgent.getHttpAgent({
+                            maxCachedSessions: 0,
                         }),
                         maxRedirects: this.maxredirects,
                         validateStatus: (status) => {
@@ -467,6 +480,35 @@ class Monitor extends BeanModel {
                     } else {
                         throw new Error("Server not found on Steam");
                     }
+                } else if (this.type === "docker") {
+                    log.debug(`[${this.name}] Prepare Options for Axios`);
+
+                    const dockerHost = await R.load("docker_host", this.docker_host);
+
+                    const options = {
+                        url: `/containers/${this.docker_container}/json`,
+                        headers: {
+                            "Accept": "*/*",
+                            "User-Agent": "Uptime-Kuma/" + version,
+                        },
+                        httpsAgent: new https.Agent({
+                            maxCachedSessions: 0,      // Use Custom agent to disable session reuse (https://github.com/nodejs/node/issues/3940)
+                            rejectUnauthorized: !this.getIgnoreTls(),
+                        }),
+                    };
+
+                    if (dockerHost._dockerType === "socket") {
+                        options.socketPath = dockerHost._dockerDaemon;
+                    } else if (dockerHost._dockerType === "tcp") {
+                        options.baseURL = dockerHost._dockerDaemon;
+                    }
+
+                    log.debug(`[${this.name}] Axios Request`);
+                    let res = await axios.request(options);
+                    if (res.data.State.Running) {
+                        bean.status = UP;
+                        bean.msg = "";
+                    }
                 } else if (this.type === "mqtt") {
                     bean.msg = await mqttAsync(this.hostname, this.mqttTopic, this.mqttSuccessMessage, {
                         port: this.port,
@@ -487,8 +529,15 @@ class Monitor extends BeanModel {
                 else if (this.type === "grpc-keyword") {
                     const response = await this.invokeGRPCRequest(bean, this);
                     log.debug("monitor", `gRPC response ${JSON.stringify(response)}`);
-                }
-                else {
+                } else if (this.type === "postgres") {
+                    let startTime = dayjs().valueOf();
+
+                    await postgresQuery(this.databaseConnectionString, this.databaseQuery);
+
+                    bean.msg = "";
+                    bean.status = UP;
+                    bean.ping = dayjs().valueOf() - startTime;
+                } else {
                     bean.msg = "Unknown Monitor Type";
                     bean.status = PENDING;
                 }
