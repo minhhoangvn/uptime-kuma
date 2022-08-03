@@ -5,11 +5,9 @@ let timezone = require("dayjs/plugin/timezone");
 dayjs.extend(utc);
 dayjs.extend(timezone);
 const axios = require("axios");
-const grpc = require("@grpc/grpc-js");
-const protojs = require("protobufjs");
 const { Prometheus } = require("../prometheus");
 const { log, UP, DOWN, PENDING, flipStatus, TimeLogger } = require("../../src/util");
-const { tcping, ping, dnsResolve, checkCertificate, checkStatusCode, getTotalClientInRoom, setting, mssqlQuery, postgresQuery, mqttAsync, setSetting, httpNtlm } = require("../util-server");
+const { tcping, ping, dnsResolve, checkCertificate, checkStatusCode, getTotalClientInRoom, setting, mssqlQuery, postgresQuery, mqttAsync, setSetting, httpNtlm, grpcQuery } = require("../util-server");
 const { R } = require("redbean-node");
 const { BeanModel } = require("redbean-node/dist/bean-model");
 const { Notification } = require("../notification");
@@ -526,8 +524,36 @@ class Monitor extends BeanModel {
                     bean.status = UP;
                     bean.ping = dayjs().valueOf() - startTime;
                 } else if (this.type === "grpc-keyword") {
-                    const response = await this.invokeGRPCRequest(bean, this);
-                    log.debug("monitor", `gRPC response ${JSON.stringify(response)}`);
+                    let startTime = dayjs().valueOf();
+                    const options = {
+                        grpcUrl: this.grpcUrl,
+                        grpcProtobufData: this.grpcProtobuf,
+                        grpcServiceName: this.grpcServiceName,
+                        grpcEnableTls: this.grpcEnableTls,
+                        grpcMethod: this.grpcMethod,
+                        grpcBody: this.grpcBody,
+                        keyword: this.keyword
+                    };
+                    const response = await grpcQuery(options);
+                    bean.ping = dayjs().valueOf() - startTime;
+                    log.debug("monitor:", `gRPC response: ${JSON.stringify(response)}`);
+                    let responseData = response.data;
+                    if (responseData.length > 50) {
+                        responseData = response.substring(0, 47) + "...";
+                    }
+                    if (response.code !== 1) {
+                        bean.status = DOWN;
+                        bean.msg = `Error in send gRPC ${response.code} ${response.errorMessage}`;
+                    } else {
+                        if (response.data.toString().includes(this.keyword)) {
+                            bean.status = UP;
+                            bean.msg = `${responseData}, keyword [${this.keyword}] is found`;
+                        } else {
+                            log.debug("monitor:", `GRPC response [${response.data}] + ", but keyword [${this.keyword}] is not in [" + ${response.data} + "]"`);
+                            bean.status = DOWN;
+                            bean.msg = `, but keyword [${this.keyword}] is not in [" + ${responseData} + "]`;
+                        }
+                    }
                 } else if (this.type === "postgres") {
                     let startTime = dayjs().valueOf();
 
@@ -716,40 +742,6 @@ class Monitor extends BeanModel {
         await R.store(tlsInfoBean);
 
         return checkCertificateResult;
-    }
-
-    /** Send gRPC request */
-    async invokeGRPCRequest(bean, monitor) {
-        return new Promise((resolve, _) => {
-            let startTime = dayjs().valueOf();
-            const client = monitor.createGrpcClient();
-            const grpcService = monitor.createGrpcServiceClientStub(client);
-            return grpcService[`${monitor.grpcMethod}`](JSON.parse(monitor.grpcBody), function (err, response) {
-                bean.ping = dayjs().valueOf() - startTime;
-                if (err) {
-                    log.debug("monitor", `Error in send gRPC ${err.code} ${err.details}`);
-                    bean.status = DOWN;
-                    bean.msg = `Error in send gRPC ${err.code} ${err.details}`;
-                    return resolve(err);
-                } else {
-                    log.debug("monitor:", `gRPC response: ${JSON.stringify(response)}`);
-                    bean.msg = `${JSON.stringify(response)}`;
-                    response = JSON.stringify(response);
-                    if (response.toString().includes(monitor.keyword)) {
-                        bean.msg += ", keyword is found";
-                        bean.status = UP;
-                    } else {
-                        if (response.length > 50) {
-                            response = response.substring(0, 47) + "...";
-                        }
-                        bean.status = DOWN;
-                        log.debug("monitor:", `GRPC response [${bean.msg}] + ", but keyword [${monitor.keyword}] is not in [" + ${bean.msg} + "]"`);
-                        bean.msg += `, but keyword [${monitor.keyword}] is not in [" + ${response} + "]`;
-                    }
-                    return resolve(response);
-                }
-            });
-        });
     }
 
     /**
@@ -1049,32 +1041,6 @@ class Monitor extends BeanModel {
         ]);
     }
 
-    createGrpcClient() {
-        const Client = grpc.makeGenericClientConstructor({});
-        const credentials = this.grpcEnableTls ? grpc.credentials.createSsl() : grpc.credentials.createInsecure();
-        return new Client(
-            this.grpcUrl,
-            credentials
-        );
-    }
-
-    createGrpcServiceClientStub(client) {
-        const protocObject = protojs.parse(this.grpcProtobuf);
-        const protoServiceObject = protocObject.root.lookupService(this.grpcServiceName);
-        return protoServiceObject.create(function (method, requestData, cb) {
-            const fullServiceName = method.fullName;
-            const serviceFQDN = fullServiceName.split(".");
-            const serviceMethod = serviceFQDN.pop();
-            const serviceMethodClientImpl = `/${serviceFQDN.slice(1).join(".")}/${serviceMethod}`;
-            log.debug("monitor", `gRPC method ${serviceMethodClientImpl}`);
-            client.makeUnaryRequest(
-                serviceMethodClientImpl,
-                arg => arg,
-                arg => arg,
-                requestData,
-                cb);
-        }, false, false);
-    }
 }
 
 module.exports = Monitor;
