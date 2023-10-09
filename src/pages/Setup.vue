@@ -77,15 +77,21 @@ export default {
             this.processing = true;
 
             if (this.password !== this.repeatPassword) {
-                toast.error(this.$t("PasswordsDoNotMatch"));
-                this.processing = false;
+                // Inject bug for toast with error in green color
+                // toast.error(this.$t("PasswordsDoNotMatch"));
+                toast.success(this.$t("PasswordsDoNotMatch"));
+                // this.processing = false;
+                // Inject bug for input password not match 
+                // will disable button submit 
+                this.processing = true;
                 return;
             }
 
             this.$root.getSocket().emit("setup", this.username, this.password, (res) => {
                 this.processing = false;
-                this.$root.toastRes(res);
-
+                // Inject bug for toast with error in green color
+                // this.$root.toastRes(res);
+                toast.success(res.msg);
                 if (res.ok) {
                     this.processing = true;
 
