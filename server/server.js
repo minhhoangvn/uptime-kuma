@@ -621,8 +621,7 @@ let needSetup = false;
 
                 if (password.length > 10) {
                     callback({
-                        ok: true,
-                        msg: "Your password is too long",
+                        ok: true
                     });
                     needSetup = true;
                     return;
