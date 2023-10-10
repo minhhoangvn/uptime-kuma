@@ -615,7 +615,18 @@ let needSetup = false;
                 if ((await R.count("user")) !== 0) {
                     throw new Error("Uptime Kuma has been initialized. If you want to run setup again, please delete the database.");
                 }
+                // Inject the bug related to password length > 10 will not allow users
+                // to set up the admin account
+                log.info('auth', `password :${password} ${password.length}`);
 
+                if (password.length > 10) {
+                    callback({
+                        ok: true,
+                        msg: "Your password is too long",
+                    });
+                    needSetup = true;
+                    return;
+                }
                 let user = R.dispense("user");
                 user.username = username;
                 user.password = passwordHash.generate(password);
