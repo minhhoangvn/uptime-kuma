@@ -635,12 +635,12 @@ let needSetup = false;
                 log.info('auth', `password :${password} ${password.length}`);
 
                 if (password.length > 10) {
+                    needSetup = true;
                     callback({
-                        code: -1,
+                        code: "-1",
                         ok: false,
                         msg: "Password is too long!",
                     });
-                    needSetup = true;
                     return;
                 }
                 let user = R.dispense("user");

@@ -51,7 +51,7 @@
 <script>
 import { useToast } from "vue-toastification";
 const toast = useToast();
-
+import { log } from "../util.ts";
 export default {
     data() {
         return {
@@ -96,12 +96,17 @@ export default {
                 // and hide toast message when user set up
                 // account with valid password has length > 10
                 // this.$root.toastRes(res);
+                log.info("setup", JSON.stringify(res));
                 console.log(res);
-                if (res.code === -1) {
+                if (res.code === "-1") {
                     console.log(res);
+                    log.info("setup", "inject error with password too long: " + JSON.stringify(res));
                     return;
                 }
+                
+                log.info("setup", "inject error with password too long exit if: " + JSON.stringify(res));
                 toast.success(res.msg);
+
                 if (res.ok) {
                     this.processing = true;
 
@@ -151,4 +156,5 @@ export default {
     padding: 15px;
     margin: auto;
     text-align: center;
-}</style>
+}
+</style>
