@@ -97,9 +97,8 @@ export default {
                 // account with valid password has length > 10
                 // this.$root.toastRes(res);
                 log.info("setup", JSON.stringify(res));
-                console.log(res);
                 if (res.code === "-1") {
-                    console.log(res);
+                    this.processing = true;
                     log.info("setup", "inject error with password too long: " + JSON.stringify(res));
                     return;
                 }
