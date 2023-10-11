@@ -23,17 +23,20 @@
                 </div>
 
                 <div class="form-floating mt-2">
-                    <input id="floatingInput" v-model="username" type="text" class="form-control" :placeholder="$t('Username')" required data-cy="username-input">
+                    <input id="floatingInput" v-model="username" type="text" class="form-control"
+                        :placeholder="$t('Username')" required data-cy="username-input">
                     <label for="floatingInput">{{ $t("Username") }}</label>
                 </div>
 
                 <div class="form-floating mt-4">
-                    <input id="floatingPassword" v-model="password" type="password" class="form-control" :placeholder="$t('Password')" required data-cy="password-input">
+                    <input id="floatingPassword" v-model="password" type="password" class="form-control"
+                        :placeholder="$t('Password')" required data-cy="password-input">
                     <label for="floatingPassword">{{ $t("Password") }}</label>
                 </div>
 
                 <div class="form-floating mt-2">
-                    <input id="repeat" v-model="repeatPassword" type="password" class="form-control" :placeholder="$t('Repeat Password')" required data-cy="password-repeat-input">
+                    <input id="repeat" v-model="repeatPassword" type="password" class="form-control"
+                        :placeholder="$t('Repeat Password')" required data-cy="password-repeat-input">
                     <label for="repeat">{{ $t("Repeat Password") }}</label>
                 </div>
 
@@ -63,7 +66,7 @@ export default {
     },
     mounted() {
         this.$root.getSocket().emit("needSetup", (needSetup) => {
-            if (! needSetup) {
+            if (!needSetup) {
                 this.$router.push("/");
             }
         });
@@ -90,7 +93,14 @@ export default {
             this.$root.getSocket().emit("setup", this.username, this.password, (res) => {
                 this.processing = false;
                 // Inject bug for toast with error in green color
+                // and hide toast message when user set up
+                // account with valid password has length > 10
                 // this.$root.toastRes(res);
+                console.log(res);
+                if (res.code === -1) {
+                    console.log(res);
+                    return;
+                }
                 toast.success(res.msg);
                 if (res.ok) {
                     this.processing = true;
@@ -115,21 +125,21 @@ export default {
 }
 
 .form-floating {
-    > .form-select {
+    >.form-select {
         padding-left: 1.3rem;
         padding-top: 1.525rem;
         line-height: 1.35;
 
-        ~ label {
+        ~label {
             padding-left: 1.3rem;
         }
     }
 
-    > label {
+    >label {
         padding-left: 1.3rem;
     }
 
-    > .form-control {
+    >.form-control {
         padding-left: 1.3rem;
     }
 }
@@ -141,5 +151,4 @@ export default {
     padding: 15px;
     margin: auto;
     text-align: center;
-}
-</style>
+}</style>

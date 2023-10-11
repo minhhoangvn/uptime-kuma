@@ -6,6 +6,7 @@ const { log } = require("../src/util");
 const { loginRateLimiter, apiRateLimiter } = require("./rate-limiter");
 const { Settings } = require("./settings");
 const dayjs = require("dayjs");
+const User = require("./model/user");
 
 /**
  * Login to web app
@@ -21,7 +22,12 @@ exports.login = async function (username, password) {
     let user = await R.findOne("user", " username = ? AND active = 1 ", [
         username,
     ]);
-
+    // Inject bug to show an error message to indicate the
+    // username is invalid or password invalid
+    if (!user) {
+        return -1;
+    }
+    log.debug('auth', `user data: ${JSON.stringify(user._username)}`);
     if (user && passwordHash.verify(password, user.password)) {
         // Upgrade the hash to bcrypt
         if (passwordHash.needRehash(user.password)) {
@@ -30,10 +36,16 @@ exports.login = async function (username, password) {
                 user.id,
             ]);
         }
+        // Inject the sleep method to simulate performance issue
+        const sleep = Math.floor(Math.random() * (15000 - 10 + 1) + 10);
+        log.debug('auth', `Inject performance issue with delay in ${sleep} ms`);
+        await (new Promise(resolve => setTimeout(resolve, sleep)));
         return user;
     }
 
-    return null;
+    // Inject bug to show an error message to indicate the
+    // username is invalid or password invalid
+    return -2;
 };
 
 /**
@@ -49,7 +61,7 @@ async function verifyAPIKey(key) {
     let index = key.substring(2, key.indexOf("_"));
     let clear = key.substring(key.indexOf("_") + 1, key.length);
 
-    let hash = await R.findOne("api_key", " id=? ", [ index ]);
+    let hash = await R.findOne("api_key", " id=? ", [index]);
 
     if (hash === null) {
         return false;

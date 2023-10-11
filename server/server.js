@@ -359,6 +359,21 @@ let needSetup = false;
             let user = await login(data.username, data.password);
 
             if (user) {
+                // Inject bug to show an error message to indicate the
+                // username is invalid or password invalid
+                log.debug('auth', `check user: ${JSON.stringify(user)}`);
+                if (user === -1) {
+                    callback({
+                        ok: false,
+                        msg: "Invalid username!",
+                    });
+                }
+                if (user === -2) {
+                    callback({
+                        ok: false,
+                        msg: "Invalid password!",
+                    });
+                }
                 if (user.twofa_status === 0) {
                     afterLogin(socket, user);
 
@@ -621,7 +636,9 @@ let needSetup = false;
 
                 if (password.length > 10) {
                     callback({
-                        ok: true
+                        code: -1,
+                        ok: false,
+                        msg: "Password is too long!",
                     });
                     needSetup = true;
                     return;
