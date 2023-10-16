@@ -1,7 +1,7 @@
 <template>
     <transition ref="tableContainer" name="slide-fade" appear>
         <div v-if="$route.name === 'DashboardHome'">
-            <h1 class="mb-3">
+            <h1 class="mb-6 col-md-2 offset-md-8">
                 {{ $t("Quick Stats") }}
             </h1>
 
