@@ -182,9 +182,9 @@ class Monitor extends BeanModel {
     }
 
     /**
-	 * Checks if the monitor is active based on itself and its parents
-	 * @returns {Promise<Boolean>}
-	 */
+     * Checks if the monitor is active based on itself and its parents
+     * @returns {Promise<Boolean>}
+     */
     async isActive() {
         const parentActive = await Monitor.isParentActive(this.id);
 
@@ -196,7 +196,7 @@ class Monitor extends BeanModel {
      * @returns {Promise<LooseObject<any>[]>}
      */
     async getTags() {
-        return await R.getAll("SELECT mt.*, tag.name, tag.color FROM monitor_tag mt JOIN tag ON mt.tag_id = tag.id WHERE mt.monitor_id = ? ORDER BY tag.name", [ this.id ]);
+        return await R.getAll("SELECT mt.*, tag.name, tag.color FROM monitor_tag mt JOIN tag ON mt.tag_id = tag.id WHERE mt.monitor_id = ? ORDER BY tag.name", [this.id]);
     }
 
     /**
@@ -299,7 +299,7 @@ class Monitor extends BeanModel {
 
             let beatInterval = this.interval;
 
-            if (! beatInterval) {
+            if (!beatInterval) {
                 beatInterval = 1;
             }
 
@@ -970,7 +970,7 @@ class Monitor extends BeanModel {
 
             previousBeat = bean;
 
-            if (! this.isStop) {
+            if (!this.isStop) {
                 log.debug("monitor", `[${this.name}] SetTimeout for next check.`);
                 this.heartbeatInterval = setTimeout(safeBeat, beatInterval * 1000);
             } else {
@@ -988,7 +988,7 @@ class Monitor extends BeanModel {
                 UptimeKumaServer.errorLog(e, false);
                 log.error("monitor", "Please report to https://github.com/louislam/uptime-kuma/issues");
 
-                if (! this.isStop) {
+                if (!this.isStop) {
                     log.info("monitor", "Try to restart the monitor");
                     this.heartbeatInterval = setTimeout(safeBeat, this.interval * 1000);
                 }
@@ -1256,7 +1256,7 @@ class Monitor extends BeanModel {
 
         } else {
             // Handle new monitor with only one beat, because the beat's duration = 0
-            let status = parseInt(await R.getCell("SELECT `status` FROM heartbeat WHERE monitor_id = ?", [ monitorID ]));
+            let status = parseInt(await R.getCell("SELECT `status` FROM heartbeat WHERE monitor_id = ?", [monitorID]));
 
             if (status === UP) {
                 uptime = 1;
@@ -1337,8 +1337,7 @@ class Monitor extends BeanModel {
         // * MAINTENANCE -> DOWN = important
         // DOWN -> MAINTENANCE = not important
         // UP -> MAINTENANCE = not important
-        return isFirstBeat ||
-            (previousBeatStatus === MAINTENANCE && currentBeatStatus === DOWN) ||
+        return (previousBeatStatus === MAINTENANCE && currentBeatStatus === DOWN) ||
             (previousBeatStatus === UP && currentBeatStatus === DOWN) ||
             (previousBeatStatus === DOWN && currentBeatStatus === UP) ||
             (previousBeatStatus === PENDING && currentBeatStatus === DOWN);
@@ -1406,7 +1405,7 @@ class Monitor extends BeanModel {
         if (tlsInfoObject && tlsInfoObject.certInfo && tlsInfoObject.certInfo.daysRemaining) {
             const notificationList = await Monitor.getNotificationList(this);
 
-            if (! notificationList.length > 0) {
+            if (!notificationList.length > 0) {
                 // fail fast. If no notification is set, all the following checks can be skipped.
                 log.debug("monitor", "No notification, no need to send cert notification");
                 return;
@@ -1415,8 +1414,8 @@ class Monitor extends BeanModel {
             let notifyDays = await setting("tlsExpiryNotifyDays");
             if (notifyDays == null || !Array.isArray(notifyDays)) {
                 // Reset Default
-                setSetting("tlsExpiryNotifyDays", [ 7, 14, 21 ], "general");
-                notifyDays = [ 7, 14, 21 ];
+                setSetting("tlsExpiryNotifyDays", [7, 14, 21], "general");
+                notifyDays = [7, 14, 21];
             }
 
             if (Array.isArray(notifyDays)) {
@@ -1507,7 +1506,7 @@ class Monitor extends BeanModel {
         const maintenanceIDList = await R.getCol(`
             SELECT maintenance_id FROM monitor_maintenance
             WHERE monitor_id = ?
-        `, [ monitorID ]);
+        `, [monitorID]);
 
         for (const maintenanceID of maintenanceIDList) {
             const maintenance = await UptimeKumaServer.getInstance().getMaintenance(maintenanceID);
@@ -1586,7 +1585,7 @@ class Monitor extends BeanModel {
 
     /**
      * Gets recursive all child ids
-	 * @param {number} monitorID ID of the monitor to get
+     * @param {number} monitorID ID of the monitor to get
      * @returns {Promise<Array>}
      */
     static async getAllChildrenIDs(monitorID) {
@@ -1618,10 +1617,10 @@ class Monitor extends BeanModel {
     }
 
     /**
-	 * Checks recursive if parent (ancestors) are active
-	 * @param {number} monitorID ID of the monitor to get
-	 * @returns {Promise<Boolean>}
-	 */
+     * Checks recursive if parent (ancestors) are active
+     * @param {number} monitorID ID of the monitor to get
+     * @returns {Promise<Boolean>}
+     */
     static async isParentActive(monitorID) {
         const parent = await Monitor.getParent(monitorID);
 
