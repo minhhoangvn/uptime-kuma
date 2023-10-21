@@ -1323,6 +1323,10 @@ message HealthCheckResponse {
          * @returns {boolean} Is the form input valid?
          */
         isInputValid() {
+            if (this.monitor.name.length > 128 || this.monitor.name.length <= 10) {
+                toast.error("The [Friendly Name] value is invalid!. The value for friendly name must be between 10 to 128 characters");
+                return false;
+            }
             if (this.monitor.body && (!this.monitor.httpBodyEncoding || this.monitor.httpBodyEncoding === "json")) {
                 try {
                     JSON.parse(this.monitor.body);

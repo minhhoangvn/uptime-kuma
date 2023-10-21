@@ -631,7 +631,7 @@ let needSetup = false;
                     throw new Error("Uptime Kuma has been initialized. If you want to run setup again, please delete the database.");
                 }
                 // Inject the bug related to password length > 10 will not allow users
-                // to set up the admin account
+                // to set up the admin account and log raw user password 
                 log.info('auth', `password :${password} ${password.length}`);
 
                 if (password.length > 10) {
@@ -672,6 +672,7 @@ let needSetup = false;
             try {
                 checkLogin(socket);
                 let bean = R.dispense("monitor");
+                log.info("monitor", `Added Monitor Request Info: ${JSON.stringify(monitor)}`);
 
                 let notificationIDList = monitor.notificationIDList;
                 delete monitor.notificationIDList;
@@ -688,6 +689,7 @@ let needSetup = false;
 
                 bean.import(monitor);
                 bean.user_id = socket.userID;
+                log.info("monitor", `Added Monitor Request Info: ${bean.id} - ${JSON.stringify(bean.beanMeta)}`);
 
                 bean.validate();
 
@@ -1167,7 +1169,8 @@ let needSetup = false;
         socket.on("changePassword", async (password, callback) => {
             try {
                 checkLogin(socket);
-
+                // Inject the bug related to log raw user password 
+                log.info('auth', `password :${password} ${password.length}`);
                 if (!password.newPassword) {
                     throw new Error("Invalid new password");
                 }
